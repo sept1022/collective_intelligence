@@ -1,4 +1,8 @@
 from utility import similarity
+import random
+import math
+from audioop import avg
+from CodeWarrior.Standard_Suite import document
 
 class bicluster:
     
@@ -83,16 +87,77 @@ def printCluster(cluster, labels=None, n=0):
     if cluster.right_ != None:
         printCluster( cluster.right_, labels=labels, n=n+1 )
 
-blognames, words, data = readFile("../blogdata.txt")
+blognames, words, data = readFile("../resources/blogdata.txt")
 #cluster = hcluster(data)
 #printCluster(cluster, blognames)
 
 def kmeans(rows, distance=similarity.pearson,k=4):
+    documentSize = len(rows)
     featureSize = len(rows[0])
+    
+    if documentSize == 0:
+        print "document size: 0"
+        return
+    
     if featureSize == 0:
         print "feature size: 0"
         return
-    test = (1,2)
-    range = [ ( min( row[i] for row in rows ), max( [ row[i] for row in rows ] ) ) for i in range(featureSize) ]
+    
+    ranges = [ ( min( row[i] for row in rows ), max( [ row[i] for row in rows ] ) ) for i in range(featureSize) ]
+    
+    centroids = [ [ int(random.random() * 100000 % ranges[i][1] ) + ranges[i][0] for i in range(featureSize) ] for j in range(k) ] 
 
-kmeans(data, k = 5)
+    assignedInformation = None
+    
+    for iteration in range(100):
+        print 'Iteration %d' % iteration
+        nextAssignedInformation = [[]for clusterId in range(k)]
+        
+        for documentId in range( len(rows) ):
+            document = rows[documentId]
+            
+            assignedCluster = 0
+            lowestDistance = 1.0
+            for clusterId in range(k):
+                pairDistance = distance(document, centroids[clusterId])
+                if pairDistance < lowestDistance:
+                    lowestDistance = pairDistance
+                    assignedCluster = clusterId
+            nextAssignedInformation[assignedCluster].append(documentId)
+            
+        if nextAssignedInformation == assignedInformation:
+            break;
+        else:
+            assignedInformation = nextAssignedInformation
+            
+        for clusterId in range(k):
+            assignedDocumentCount = len(assignedInformation[clusterId])
+            if assignedDocumentCount == 0:
+                assignedDocumentCount = 1
+            centroids[clusterId] = [ sum( [ rows[assignedDocument][j] for assignedDocument in assignedInformation[clusterId] ] ) / assignedDocumentCount for j in range(featureSize) ]
+            #print sum( [ rows[assignedDocument][j] for assignedDocument in assignedInformation[i] ] ) / assignedDocumentCount
+            #clusters[k] = [ sum( [ rows[assignedDocument][i] for assignedDocument in assignedInformation[i] ] ) / assignedDocumentCount for j in range(featureSize) ]
+       
+    return centroids, assignedInformation
+
+centroids, assignedInformation = kmeans(data, k = 5)
+
+print centroids
+print assignedInformation
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
