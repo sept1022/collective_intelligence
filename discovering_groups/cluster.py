@@ -2,7 +2,6 @@ from utility import similarity
 import random
 import math
 from audioop import avg
-from CodeWarrior.Standard_Suite import document
 
 class bicluster:
     
